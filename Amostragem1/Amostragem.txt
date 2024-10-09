@@ -1,0 +1,71 @@
+#Total de pessoas com sorologia positiva para COVID-19 no bairro
+
+#O total de pessoas com sorologia positiva no bairro foi obtido através da soma dos valores da variável \texttt{n\_positivo} em todos os domicílios. O \textbf{código R} a seguir ilustra como calcular o total de pessoas positivas:
+
+# Carregando a base de dados
+dados <- COVID_bairro
+
+# Calculando o total de pessoas com sorologia positiva
+total_positivo <- sum(dados$n_positivo)
+total_positivo
+
+#Amostra Aleatória Simples Sem Reposição
+#Neste método, são selecionados 9 domicílios de forma aleatória, sem reposição.
+
+#Amostra aleatoria simples sem reposicao, usando a funcao sample
+#que embaralha os elementos do objeto, ou seja, monta um 
+#vetor de mesmo tamanho com os elementos alocados aleatoriamente.
+
+amostra_simples <- dados[sample(1:nrow(dados), 9, replace = FALSE), ]
+total_amostra_simples <- sum(amostra_simples$n_positivo)
+total_amostra_simples
+
+#Amostra Sistemática
+#Aqui, selecionamos domicílios a intervalos regulares, com o intervalo j
+#calculado como:
+
+# Definindo o intervalo j
+j <- floor(nrow(dados) / 9)
+
+# Selecionar amostra sistematica
+amostra_sistematica <- dados[seq(1, nrow(dados), by = j), ][1:9, ]
+total_amostra_sistematica <- sum(amostra_sistematica$n_positivo)
+total_amostra_sistematica
+
+#Amostra Estratificada Proporcional
+#Dividimos a amostra proporcionalmente ao tamanho dos estratos A e B. 
+#O código a seguir utiliza o pacote sampling para realizar 
+#a amostragem estratificada:
+
+#Instalando os pacotes
+library(dplyr)
+library(sampling)
+
+#Utilizando a função da linguagem R, strata
+amostra_estratificada <- strata(
+  data = dados, 
+  stratanames = "Estrato", 
+  size = rep(9, length(unique(dados$Estrato))), 
+  method = "srswor"
+)
+
+indices_amostra <- amostra_estratificada$ID_unit
+amostra_estratificada_final <- dados[indices_amostra, ]
+total_amostra_estratificada <- sum(amostra_estratificada_final$n_positivo)
+total_amostra_estratificada
+
+#Amostragem por Conglomerados em Dois Estágios
+#Nesta técnica, primeiro selecionamos 3 quarteirões, 
+#e depois 3 domicílios em cada quarteirão:
+
+bd_auxiliar = dados
+bd_auxiliar$quarteirao <- rep(1:9, each = 10)
+
+quarteiroes = sample(1:9, 3)
+bd_auxiliar <- bd_auxiliar[bd_auxiliar$quarteirao %in% quarteiroes, ]
+
+sorteio4 = strata(bd_auxiliar, c("quarteirao"), size=c(3, 3, 3), method="srswor")
+sorteio4 = sorteio4$ID_unit
+amostra_conglomerada = bd_auxiliar[sorteio4, ]
+casos_amostra_conglomerada = sum(amostra_conglomerada$n_positivo)
+
